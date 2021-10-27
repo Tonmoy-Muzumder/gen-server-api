@@ -17,6 +17,8 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+
+
 async function run() {
     try {
       await client.connect();
@@ -25,10 +27,27 @@ async function run() {
       const servicesCollection = database.collection("services");
     //   get api
     app.get('/services', async (req, res) => {
+        console.log(req.query);
         const cursor = servicesCollection.find({});
-        const services = await cursor.toArray();
-        res.send(services)
+        const page = req.query.page;
+        const size = parseInt(req.query.size);
+        let services;
+        const count = await cursor.count();
+        if(page){
+          services = await cursor.skip(page*size).limit(size).toArray();
+        }
+        else{
+          const services = await cursor.toArray();
+        }
+      
+        
+        res.send(
+         { count,
+          services
+        })
     });
+
+
 
     // get single service
     app.get('/services/:id', async (req, res) => {
